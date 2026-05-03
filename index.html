@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Case Interview Scorecard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, system-ui, sans-serif; background: #f8fafc; color: #1e293b; padding: 24px 16px; }
+  .wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+  .header { background: #4F3B8C; border-radius: 14px; padding: 20px 24px; }
+  .header h1 { color: #fff; font-size: 20px; font-weight: 800; }
+
+  .card { background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .card h2 { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 14px; }
+
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px; }
+  .field label .req { color: #ef4444; margin-left: 2px; }
+  .field input, .field textarea, .field select {
+    width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px;
+    padding: 9px 11px; font-size: 13px; font-family: inherit; outline: none;
+    transition: border .15s; background: #fff;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color: #7c3aed; }
+  .field input:invalid:not(:placeholder-shown), .field textarea:invalid:not(:placeholder-shown) { border-color: #ef4444; }
+  .field textarea { resize: vertical; min-height: 70px; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Dimensions toggle */
+  .dim-toggle-btn {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    background: #EDE9F8; border: none; border-radius: 12px; padding: 13px 18px;
+    font-size: 13px; font-weight: 700; color: #4F3B8C; cursor: pointer;
+    transition: background .15s;
+  }
+  .dim-toggle-btn:hover { background: #DDD8F4; }
+  .dim-toggle-btn .arrow { transition: transform .25s; font-size: 11px; }
+  .dim-toggle-btn.open .arrow { transform: rotate(180deg); }
+
+  .dim-panel { display: none; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .dim-panel.open { display: block; }
+
+  .dim-section-title {
+    background: #1e3a4f; color: #fff; font-size: 12px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .8px; padding: 10px 16px;
+  }
+  table.dim-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.dim-table th { background: #0f6e56; color: #fff; font-weight: 700; padding: 8px 14px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  table.dim-table td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+  table.dim-table tr:last-child td { border-bottom: none; }
+  table.dim-table tr:nth-child(even) td { background: #f8fafc; }
+  table.dim-table td:first-child { font-weight: 700; color: #1e293b; width: 140px; }
+  table.dim-table ul { margin: 0; padding-left: 14px; line-height: 1.7; color: #475569; }
+
+  .section-card { border-radius: 14px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .section-title { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
+  .rubric { font-size: 11px; color: #94a3b8; margin-bottom: 12px; line-height: 1.5; }
+
+  .scores { display: flex; gap: 6px; margin-bottom: 10px; }
+  .score-btn {
+    flex: 1; padding: 9px 0; border-radius: 8px; border: none;
+    font-size: 15px; font-weight: 800; cursor: pointer;
+    background: #f1f5f9; color: #94a3b8; transition: all .15s;
+  }
+  .score-btn.active-1 { background: #ef4444; color: #fff; }
+  .score-btn.active-2 { background: #f97316; color: #fff; }
+  .score-btn.active-3 { background: #eab308; color: #fff; }
+  .score-btn.active-4 { background: #84cc16; color: #fff; }
+  .score-btn.active-5 { background: #22c55e; color: #fff; }
+
+  .score-label { font-size: 11px; color: #94a3b8; margin-bottom: 8px; min-height: 16px; }
+  .score-required { font-size: 11px; color: #ef4444; display: none; margin-bottom: 6px; }
+  .score-required.show { display: block; }
+
+  .submit-btn {
+    background: #4F3B8C; color: #fff; border: none; border-radius: 12px;
+    padding: 15px; font-weight: 800; font-size: 15px; cursor: pointer;
+    transition: background .15s; width: 100%;
+  }
+  .submit-btn:hover { background: #3b2a6e; }
+  .submit-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+  .success {
+    background: #dcfce7; border: 1.5px solid #86efac; border-radius: 14px;
+    padding: 20px; text-align: center; display: none;
+  }
+  .success h3 { color: #15803d; font-size: 16px; font-weight: 800; }
+  .success p  { color: #166534; font-size: 13px; margin-top: 6px; }
+
+  .error-msg { background: #fee2e2; color: #991b1b; border-radius: 8px; padding: 10px 14px; font-size: 13px; display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <h1>Case Interview Scorecard</h1>
+  </div>
+
+  <div id="successMsg" class="success">
+    <h3>✅ Scorecard submitted!</h3>
+    <p>Results saved to Google Sheets.</p>
+    <button onclick="resetForm()" style="margin-top:12px;background:#15803d;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-weight:700;font-size:13px;cursor:pointer;">Submit another</button>
+  </div>
+
+  <div id="errorMsg" class="error-msg"></div>
+
+  <!-- Dimensions Toggle -->
+  <button class="dim-toggle-btn" id="dimToggle" onclick="toggleDimensions()">
+    <span>📋 View dimensions assessed</span>
+    <span class="arrow">▼</span>
+  </button>
+
+  <div class="dim-panel" id="dimPanel">
+    <div class="dim-section-title">Problem-solving</div>
+    <table class="dim-table">
+      <tr><th>Dimension</th><th>Description</th></tr>
+      <tr><td>Structuring</td><td><ul><li>Identify client's goal and clarify ambiguities</li><li>Propose a comprehensive, independent set of drivers</li><li>Ensure approach is prioritised and insightful</li></ul></td></tr>
+      <tr><td>Math</td><td><ul><li>Lay out a clear and efficient approach</li><li>Calculate correctly, quickly, and confidently without help</li><li>State implications</li></ul></td></tr>
+      <tr><td>Judgement &amp; insights</td><td><ul><li>Process new information quickly, prioritising what is important</li><li>Connect findings to develop sound recommendations</li><li>Share deep insights and far-reaching implications</li></ul></td></tr>
+      <tr><td>Creativity</td><td><ul><li>Share numerous, varied, and sound ideas in a structured way</li></ul></td></tr>
+      <tr><td>Synthesis</td><td><ul><li>Make a sound and practical recommendation convincingly</li><li>Support recommendation with key points and specific next steps</li></ul></td></tr>
+      <tr><td>Case leadership</td><td><ul><li>Progress case quickly, staying focused on objectives</li><li>Ask probing questions, make reasonable assumptions</li><li>Build on findings, adapt approach, suggest next steps</li></ul></td></tr>
+    </table>
+    <div class="dim-section-title" style="margin-top:2px;">General impression</div>
+    <table class="dim-table">
+      <tr><th>Dimension</th><th>Description</th></tr>
+      <tr><td>Presence</td><td><ul><li>Be professional and confident; display expert-like credibility</li><li>Be engaging; build genuine rapport</li><li>Be energetic; show positive personality</li></ul></td></tr>
+      <tr><td>Communication</td><td><ul><li>Share main idea before details in an organised way</li><li>Speak precisely and concisely</li><li>Listen actively; communicate visually</li></ul></td></tr>
+    </table>
+  </div>
+
+  <form id="scorecardForm" novalidate>
+
+    <!-- Meta -->
+    <div class="card" style="margin-bottom:0">
+      <h2 style="color:#4F3B8C">Case Details</h2>
+      <div class="grid2">
+        <div class="field"><label>Interviewer <span class="req">*</span></label><input type="text" name="interviewer" placeholder="Name" required/></div>
+        <div class="field"><label>Case Name <span class="req">*</span></label><input type="text" name="case" placeholder="e.g. Retail profitability" required/></div>
+        <div class="field"><label>Date <span class="req">*</span></label><input type="date" name="date" required/></div>
+      </div>
+    </div>
+
+    <!-- Sections -->
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px;">
+
+      <div class="section-card" style="background:#fff;border:1.5px solid #EDE9F8;">
+        <div class="section-title" style="color:#4F3B8C">🗂 Structuring</div>
+        <div class="rubric">1 = No clear structure · 3 = Clarified ambiguity, MECE drivers · 5 = Prioritised steps + helpful insights</div>
+        <div class="scores" id="structuring-scores">
+          <button type="button" class="score-btn" onclick="setScore('structuring',1,this)">1</button>
+          <button type="button" class="score-btn" onclick="setScore('structuring',2,this)">2</button>
+          <button type="button" class="score-btn" onclick="setScore('structuring',3,this)">3</button>
+          <button type="button" class="score-btn" onclick="setScore('structuring',4,this)">4</button>
+          <button type="button" class="score-btn" onclick="setScore('structuring',5,this)">5</button>
+        </div>
+        <div class="score-label" id="structuring-label"></div>
+        <div class="score-required" id="structuring-req">Please select a score</div>
+        <input type="hidden" name="structuring_score" id="structuring_score"/>
+        <div class="field"><label>Notes <span class="req">*</span></label><textarea name="structuring_notes" placeholder="Comments..." required></textarea></div>
+      </div>
+
+      <div class="section-card" style="background:#fff;border:1.5px solid #dbeafe;">
+        <div class="section-title" style="color:#1d4ed8">🔢 Math</div>
+        <div class="rubric">1 = Mistakes, needed help · 3 = Correct & confident, stated implications · 5 = Clear efficient approach, quick</div>
+        <div class="scores" id="math-scores">
+          <button type="button" class="score-btn" onclick="setScore('math',1,this)">1</button>
+          <button type="button" class="score-btn" onclick="setScore('math',2,this)">2</button>
+          <button type="button" class="score-btn" onclick="setScore('math',3,this)">3</button>
+          <button type="button" class="score-btn" onclick="setScore('math',4,this)">4</button>
+          <button type="button" class="score-btn" onclick="setScore('math',5,this)">5</button>
+        </div>
+        <div class="score-label" id="math-label"></div>
+        <div class="score-required" id="math-req">Please select a score</div>
+        <input type="hidden" name="math_score" id="math_score"/>
+        <div class="field"><label>Notes <span class="req">*</span></label><textarea name="math_notes" placeholder="Comments..." required></textarea></div>
+      </div>
+
+      <div class="section-card" style="background:#fff;border:1.5px solid #ccfbf1;">
+        <div class="section-title" style="color:#0f766e">🔍 Judgement & Insights</div>
+        <div class="rubric">1 = Missed key insights · 3 = Connected findings, sound recommendations · 5 = Deep insights, far-reaching implications</div>
+        <div class="scores" id="judgement-scores">
+          <button type="button" class="score-btn" onclick="setScore('judgement',1,this)">1</button>
+          <button type="button" class="score-btn" onclick="setScore('judgement',2,this)">2</button>
+          <button type="button" class="score-btn" onclick="setScore('judgement',3,this)">3</button>
+          <button type="button" class="score-btn" onclick="setScore('judgement',4,this)">4</button>
+          <button type="button" class="score-btn" onclick="setScore('judgement',5,this)">5</button>
+        </div>
+        <div class="score-label" id="judgement-label"></div>
+        <div class="score-required" id="judgement-req">Please select a score</div>
+        <input type="hidden" name="judgement_score" id="judgement_score"/>
+        <div class="field"><label>Notes <span class="req">*</span></label><textarea name="judgement_notes" placeholder="Comments..." required></textarea></div>
+      </div>
+
+      <div class="section-card" style="background:#fff;border:1.5px solid #fef3c7;">
+        <div class="section-title" style="color:#b45309">💡 Creativity</div>
+        <div class="rubric">1 = Struggled with ideas · 3 = Numerous, varied, sound ideas · 5 = Exceptional creativity in structured way</div>
+        <div class="scores" id="creativity-scores">
+          <button type="button" class="score-btn" onclick="setScore('creativity',1,this)">1</button>
+          <button type="button" class="score-btn" onclick="setScore('creativity',2,this)">2</button>
+          <button type="button" class="score-btn" onclick="setScore('creativity',3,this)">3</button>
+          <button type="button" class="score-btn" onclick="setScore('creativity',4,this)">4</button>
+          <button type="button" class="score-btn" onclick="setScore('creativity',5,this)">5</button>
+        </div>
+        <div class="score-label" id="creativity-label"></div>
+        <div class="score-required" id="creativity-req">Please select a score</div>
+        <input type="hidden" name="creativity_score" id="creativity_score"/>
+        <div class="field"><label>Notes <span class="req">*</span></label><textarea name="creativity_notes" placeholder="Comments..." required></textarea></div>
+      </div>
+
+      <div class="section-card" style="background:#fff;border:1.5px solid #fce7f3;">
+        <div class="section-title" style="color:#be185d">🎯 Synthesis</div>
+        <div class="rubric">1 = No clear recommendation · 3 = Supported rec with key points + next steps · 5 = Particularly convincing</div>
+        <div class="scores" id="synthesis-scores">
+          <button type="button" class="score-btn" onclick="setScore('synthesis',1,this)">1</button>
+          <button type="button" class="score-btn" onclick="setScore('synthesis',2,this)">2</button>
+          <button type="button" class="score-btn" onclick="setScore('synthesis',3,this)">3</button>
+          <button type="button" class="score-btn" onclick="setScore('synthesis',4,this)">4</button>
+          <button type="button" class="score-btn" onclick="setScore('synthesis',5,this)">5</button>
+        </div>
+        <div class="score-label" id="synthesis-label"></div>
+        <div class="score-required" id="synthesis-req">Please select a score</div>
+        <input type="hidden" name="synthesis_score" id="synthesis_score"/>
+        <div class="field"><label>Notes <span class="req">*</span></label><textarea name="synthesis_notes" placeholder="Comments..." required></textarea></div>
+      </div>
+
+      <div class="section-card" style="background:#fff;border:1.5px solid #e0f2fe;">
+        <div class="section-title" style="color:#0369a1">🚗 Case Leadership</div>
+        <div class="rubric">1 = Passive/lost · 3 = Built on findings, stayed focused, made assumptions · 5 = Progressed quickly, probing questions</div>
+        <div class="scores" id="leadership-scores">
+          <button type="button" class="score-btn" onclick="setScore('leadership',1,this)">1</button>
+          <button type="button" class="score-btn" onclick="setScore('leadership',2,this)">2</button>
+          <button type="button" class="score-btn" onclick="setScore('leadership',3,this)">3</button>
+          <button type="button" class="score-btn" onclick="setScore('leadership',4,this)">4</button>
+          <button type="button" class="score-btn" onclick="setScore('leadership',5,this)">5</button>
+        </div>
+        <div class="score-label" id="leadership-label"></div>
+        <div class="score-required" id="leadership-req">Please select a score</div>
+        <input type="hidden" name="leadership_score" id="leadership_score"/>
+        <div class="field"><label>Notes <span class="req">*</span></label><textarea name="leadership_notes" placeholder="Comments..." required></textarea></div>
+      </div>
+
+      <div class="section-card" style="background:#fff;border:1.5px solid #ede9fe;">
+        <div class="section-title" style="color:#6d28d9">✨ Presence</div>
+        <div class="rubric">1 = Not professional · 3 = Professional, engaging, confident · 5 = Genuine rapport, expert-like credibility</div>
+        <div class="scores" id="presence-scores">
+          <button type="button" class="score-btn" onclick="setScore('presence',1,this)">1</button>
+          <button type="button" class="score-btn" onclick="setScore('presence',2,this)">2</button>
+          <button type="button" class="score-btn" onclick="setScore('presence',3,this)">3</button>
+          <button type="button" class="score-btn" onclick="setScore('presence',4,this)">4</button>
+          <button type="button" class="score-btn" onclick="setScore('presence',5,this)">5</button>
+        </div>
+        <div class="score-label" id="presence-label"></div>
+        <div class="score-required" id="presence-req">Please select a score</div>
+        <input type="hidden" name="presence_score" id="presence_score"/>
+        <div class="field"><label>Notes <span class="req">*</span></label><textarea name="presence_notes" placeholder="Comments..." required></textarea></div>
+      </div>
+
+      <div class="section-card" style="background:#fff;border:1.5px solid #d1fae5;">
+        <div class="section-title" style="color:#065f46">🗣 Communication</div>
+        <div class="rubric">1 = Unclear, scattered · 3 = Listened well, precise and concise · 5 = Organised, main idea first, visual</div>
+        <div class="scores" id="communication-scores">
+          <button type="button" class="score-btn" onclick="setScore('communication',1,this)">1</button>
+          <button type="button" class="score-btn" onclick="setScore('communication',2,this)">2</button>
+          <button type="button" class="score-btn" onclick="setScore('communication',3,this)">3</button>
+          <button type="button" class="score-btn" onclick="setScore('communication',4,this)">4</button>
+          <button type="button" class="score-btn" onclick="setScore('communication',5,this)">5</button>
+        </div>
+        <div class="score-label" id="communication-label"></div>
+        <div class="score-required" id="communication-req">Please select a score</div>
+        <input type="hidden" name="communication_score" id="communication_score"/>
+        <div class="field"><label>Notes <span class="req">*</span></label><textarea name="communication_notes" placeholder="Comments..." required></textarea></div>
+      </div>
+
+    </div>
+
+    <!-- Summary -->
+    <div class="card" style="margin-top:4px;">
+      <h2 style="color:#4F3B8C">Summary</h2>
+      <div class="field">
+        <label>Overall summary <span class="req">*</span></label>
+        <textarea name="summary" placeholder="Overall summary of the candidate's performance..." style="min-height:100px;" required></textarea>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">Submit Scorecard →</button>
+
+  </form>
+</div>
+
+<script>
+  const SHEET_URL = "https://script.google.com/macros/s/AKfycbygDSp0zaCDuNMcMSg1KKBNwgkQZGOQ1LSz8E05sUmUF-h_wnXNRv-AoKoDPubLM7sk/exec";
+
+  const LABELS = {
+    1: "😬 Below standard",
+    2: "📈 Developing",
+    3: "✅ Meets standard",
+    4: "⭐ Strong",
+    5: "🔥 Top 10%"
+  };
+
+  const DIMS = ["structuring","math","judgement","creativity","synthesis","leadership","presence","communication"];
+
+  function toggleDimensions() {
+    const btn = document.getElementById("dimToggle");
+    const panel = document.getElementById("dimPanel");
+    btn.classList.toggle("open");
+    panel.classList.toggle("open");
+  }
+
+  function setScore(dim, val, btn) {
+    document.getElementById(dim + "_score").value = val;
+    document.getElementById(dim + "-label").textContent = LABELS[val];
+    document.getElementById(dim + "-req").classList.remove("show");
+    document.querySelectorAll(`#${dim}-scores .score-btn`).forEach(b => b.className = "score-btn");
+    btn.classList.add("active-" + val);
+  }
+
+  document.getElementById("scorecardForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById("submitBtn");
+    const errEl = document.getElementById("errorMsg");
+    errEl.style.display = "none";
+
+    // Validate all text fields
+    const inputs = this.querySelectorAll("input[required], textarea[required]");
+    let valid = true;
+    inputs.forEach(el => {
+      if (!el.value.trim()) { el.style.borderColor = "#ef4444"; valid = false; }
+      else { el.style.borderColor = ""; }
+    });
+
+    // Validate scores
+    DIMS.forEach(dim => {
+      if (!document.getElementById(dim + "_score").value) {
+        document.getElementById(dim + "-req").classList.add("show");
+        valid = false;
+      }
+    });
+
+    if (!valid) {
+      errEl.textContent = "Please fill in all required fields and select a score for every dimension.";
+      errEl.style.display = "block";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Submitting...";
+
+    const fd = new FormData(this);
+    const data = Object.fromEntries(fd.entries());
+
+    try {
+      const payload = encodeURIComponent(JSON.stringify(data));
+      const res = await fetch(`${SHEET_URL}?payload=${payload}`, { method: "GET", redirect: "follow" });
+      const json = await res.json();
+      if (json.status === "success") {
+        document.getElementById("scorecardForm").style.display = "none";
+        document.getElementById("successMsg").style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        throw new Error(json.message || "Unknown error");
+      }
+    } catch (err) {
+      errEl.textContent = "Submission failed: " + err.message;
+      errEl.style.display = "block";
+      btn.disabled = false;
+      btn.textContent = "Submit Scorecard →";
+    }
+  });
+
+  function resetForm() {
+    document.getElementById("scorecardForm").reset();
+    document.getElementById("scorecardForm").style.display = "block";
+    document.getElementById("successMsg").style.display = "none";
+    document.querySelectorAll(".score-btn").forEach(b => b.className = "score-btn");
+    document.querySelectorAll(".score-label").forEach(el => el.textContent = "");
+    document.querySelectorAll(".score-required").forEach(el => el.classList.remove("show"));
+    document.querySelectorAll("input[type=hidden]").forEach(el => el.value = "");
+  }
+</script>
+</body>
+</html>
